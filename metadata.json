@@ -1,0 +1,6 @@
+{
+  "name": "Rekap Keuangan",
+  "description": "Aplikasi rekap dan manajemen keuangan pribadi yang modern, bersih, dan mudah digunakan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
