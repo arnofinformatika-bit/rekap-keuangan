@@ -13,8 +13,8 @@ export const LoginOnboard: React.FC<LoginOnboardProps> = ({
   isDarkMode,
   toggleDarkMode
 }) => {
-  const [name, setName] = useState('Arno');
-  const [email, setEmail] = useState('arnofinformatika@gmail.com');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

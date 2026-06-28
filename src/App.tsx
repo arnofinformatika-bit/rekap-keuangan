@@ -57,21 +57,21 @@ export default function App() {
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('rekap_keuangan_is_logged_in') !== 'false';
+    return localStorage.getItem('rekap_keuangan_is_logged_in') === 'true';
   });
   const [username, setUsername] = useState<string>(() => {
-    return localStorage.getItem('rekap_keuangan_username') || 'Arno';
+    return localStorage.getItem('rekap_keuangan_username') || '';
   });
   const [userEmail, setUserEmail] = useState<string>(() => {
-    return localStorage.getItem('rekap_keuangan_user_email') || 'arnofinformatika@gmail.com';
+    return localStorage.getItem('rekap_keuangan_user_email') || '';
   });
 
   const handleLogin = (name: string, email: string) => {
-    setUsername(name || 'Arno');
-    setUserEmail(email || 'arnofinformatika@gmail.com');
+    setUsername(name || 'Pengguna');
+    setUserEmail(email || 'user@example.com');
     setIsLoggedIn(true);
-    localStorage.setItem('rekap_keuangan_username', name || 'Arno');
-    localStorage.setItem('rekap_keuangan_user_email', email || 'arnofinformatika@gmail.com');
+    localStorage.setItem('rekap_keuangan_username', name || 'Pengguna');
+    localStorage.setItem('rekap_keuangan_user_email', email || 'user@example.com');
     localStorage.setItem('rekap_keuangan_is_logged_in', 'true');
   };
 
