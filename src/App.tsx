@@ -303,6 +303,26 @@ export default function App() {
                 </button>
               </div>
 
+              <div className="pt-4 border-t border-sky-100/60 dark:border-slate-800/60 space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-sky-700/80 dark:text-slate-500 font-bold px-3 mb-2">Tampilan</p>
+                <button
+                  onClick={toggleDarkMode}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-sm font-semibold hover:bg-sky-100/70 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4" />}
+                    <span>Mode Gelap</span>
+                  </div>
+                  <div className={`w-8 h-4.5 rounded-full p-0.5 transition-colors duration-200 ${
+                    isDarkMode ? 'bg-indigo-600' : 'bg-slate-300'
+                  }`}>
+                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform duration-200 transform ${
+                      isDarkMode ? 'translate-x-3.5' : 'translate-x-0'
+                    }`} />
+                  </div>
+                </button>
+              </div>
+
             </nav>
           </div>
 

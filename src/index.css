@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+.print-only {
+  display: none !important;
+}
+
 @media print {
   body, html {
     background-color: #ffffff !important;
@@ -20,6 +24,10 @@
   main {
     padding: 0 !important;
     margin: 0 !important;
+  }
+
+  .print-only {
+    display: block !important;
   }
 
   .print-content {

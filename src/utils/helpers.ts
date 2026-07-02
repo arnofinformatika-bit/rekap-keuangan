@@ -21,7 +21,7 @@ export const CATEGORIES: Category[] = [
   { id: 'inc-investasi', name: 'Investasi', type: 'INCOME', icon: 'TrendingUp', color: 'cyan', bgClass: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/50' },
   { id: 'inc-bonus', name: 'Bonus & Sampingan', type: 'INCOME', icon: 'Award', color: 'amber', bgClass: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50' },
   { id: 'inc-penjualan', name: 'Penjualan Sampingan', type: 'INCOME', icon: 'ShoppingBag', color: 'blue', bgClass: 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50' },
-  { id: 'inc-tabungan', name: 'Pencairan Tabungan', type: 'INCOME', icon: 'PiggyBank', color: 'teal', bgClass: 'bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400 border border-teal-100 dark:border-teal-900/50' },
+  { id: 'inc-tabungan', name: 'Tabungan', type: 'INCOME', icon: 'PiggyBank', color: 'teal', bgClass: 'bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400 border border-teal-100 dark:border-teal-900/50' },
   { id: 'inc-lain', name: 'Pendapatan Lain', type: 'INCOME', icon: 'Coins', color: 'slate', bgClass: 'bg-slate-50 text-slate-600 dark:bg-slate-900/40 dark:text-slate-400 border border-slate-100 dark:border-slate-800/50' },
 
   // Expense
