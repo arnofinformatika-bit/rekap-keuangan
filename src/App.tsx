@@ -47,7 +47,12 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rekap_keuangan_theme') === 'dark';
+    }
+    return false;
+  });
   const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'transactions'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -101,26 +106,21 @@ export default function App() {
     const today = new Date();
     setSelectedMonth(today.getMonth() + 1);
     setSelectedYear(today.getFullYear());
-
-    // Check saved theme
-    const savedTheme = localStorage.getItem('rekap_keuangan_theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
   }, []);
 
   // Sync dark mode class
-  const toggleDarkMode = () => {
-    const newVal = !isDarkMode;
-    setIsDarkMode(newVal);
-    if (newVal) {
+  useEffect(() => {
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('rekap_keuangan_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('rekap_keuangan_theme', 'light');
     }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
   };
 
   // Add transaction
@@ -431,7 +431,7 @@ export default function App() {
         <main className="flex-1 p-6 sm:p-8 space-y-6 overflow-x-hidden">
           
           {/* Welcome Period Selector Panel */}
-          <section className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200/70 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <section className="no-print bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200/70 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="text-[10px] font-extrabold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
                 <CalendarDays className="w-3.5 h-3.5" />
@@ -493,11 +493,13 @@ export default function App() {
               {activeView === 'dashboard' && (
                 <>
                   {/* Metric summary boxes */}
-                  <MetricCards totalIncome={totalIncome} totalExpense={totalExpense} />
+                  <div className="no-print">
+                    <MetricCards totalIncome={totalIncome} totalExpense={totalExpense} />
+                  </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Charts summary preview */}
-                    <div className="lg:col-span-5 flex flex-col gap-6">
+                    <div className="no-print lg:col-span-5 flex flex-col gap-6">
                       <VisualReports
                         transactions={transactions}
                         selectedMonth={selectedMonth}
@@ -558,7 +560,7 @@ export default function App() {
 
               {/* VIEW 2: REPORTS */}
               {activeView === 'reports' && (
-                <div className="space-y-6">
+                <div className="space-y-6 no-print">
                   <MetricCards totalIncome={totalIncome} totalExpense={totalExpense} />
                   <VisualReports
                     transactions={transactions}
@@ -571,7 +573,7 @@ export default function App() {
               {/* VIEW 3: TRANSACTIONS LIST */}
               {activeView === 'transactions' && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/80">
+                  <div className="no-print flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/80">
                     <p className="text-xs text-slate-500">
                       Seluruh transaksi yang terdaftar pada bulan ini. Klik tombol <strong className="text-indigo-500">Tambah Transaksi</strong> di pojok kanan atas untuk menambah data baru.
                     </p>

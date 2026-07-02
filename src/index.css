@@ -1,13 +1,42 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 .print-only {
   display: none !important;
 }
 
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body, html {
     background-color: #ffffff !important;
     color: #000000 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Flatten and reset all nesting containers to avoid clips, offsets, and multi-page margin leaks on mobile/desktop browsers */
+  #root,
+  #root > div,
+  .flex-1,
+  main,
+  .grid,
+  .space-y-6,
+  section {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
   }
 
   aside,
@@ -21,11 +50,6 @@
     display: none !important;
   }
 
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
   .print-only {
     display: block !important;
   }
@@ -34,46 +58,30 @@
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 10px !important;
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;
   }
 
+  /* Responsive styling for small print sizes / mobile screens */
   .print-header {
     display: block !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 20px !important;
     border-bottom: 2px solid #334155 !important;
-    padding-bottom: 12px !important;
+    padding-bottom: 10px !important;
   }
 
-  .print-table {
-    display: table !important;
+  /* Ensure the table auto-fits nicely and doesn't get cut off on narrower print configurations */
+  table {
     width: 100% !important;
-    border-collapse: collapse !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    word-wrap: break-word !important;
   }
 
-  .print-table th, 
-  .print-table td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 10px 12px !important;
-    text-align: left !important;
-    font-size: 11px !important;
-    color: #0f172a !important;
-  }
-
-  .print-table th {
-    background-color: #f1f5f9 !important;
-    font-weight: 700 !important;
-  }
-
-  .print-badge {
-    border: 1px solid #cbd5e1 !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
-    font-size: 10px !important;
-    background: none !important;
-    color: #0f172a !important;
+  th, td {
+    word-break: break-word !important;
   }
 }
 

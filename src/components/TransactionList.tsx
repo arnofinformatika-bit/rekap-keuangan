@@ -147,6 +147,121 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleExportSpreadsheet = () => {
+    const username = localStorage.getItem('rekap_keuangan_username') || 'Pengguna';
+    const userEmail = localStorage.getItem('rekap_keuangan_user_email') || 'user@example.com';
+    const title = `Laporan Rekapitulasi Pemasukan - ${selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}`;
+    
+    // Filter only INCOME transactions
+    const incomeList = filteredList.filter(t => t.type === 'INCOME');
+
+    let htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Pemasukan</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; }
+          .title { font-size: 14pt; font-weight: bold; color: #1e293b; }
+          .subtitle { font-size: 10pt; color: #64748b; font-weight: bold; }
+          .header-cell { background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 10pt; border: 1px solid #cbd5e1; padding: 6px; }
+          .data-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; padding: 5px; }
+          .amount-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; color: #15803d; font-weight: bold; text-align: right; padding: 5px; }
+          .footer-cell { font-size: 8pt; color: #94a3b8; font-style: italic; }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .bold { font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td colspan="6" class="title">${title.toUpperCase()}</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="subtitle">Sistem Buku Jurnal Kas FinTrack • by ARNOF DWI FERDIZA</td>
+          </tr>
+          <tr>
+            <td colspan="6"><strong>Nama Pemilik Kas:</strong> ${username} (${userEmail})</td>
+          </tr>
+          <tr>
+            <td colspan="6"><strong>Tanggal Unduh:</strong> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+          </tr>
+          <tr>
+            <td colspan="6"><strong>Total Akumulasi Pemasukan:</strong> ${formatRupiah(incomeList.reduce((sum, t) => sum + t.amount, 0))}</td>
+          </tr>
+          <tr><td colspan="6"></td></tr>
+          <thead>
+            <tr>
+              <th class="header-cell text-center" style="width: 50px;">No</th>
+              <th class="header-cell" style="width: 150px;">Jenis Transaksi</th>
+              <th class="header-cell text-right" style="width: 150px;">Jumlah Uang</th>
+              <th class="header-cell" style="width: 150px;">Tanggal Transaksi</th>
+              <th class="header-cell" style="width: 200px;">Kategori</th>
+              <th class="header-cell" style="width: 250px;">Deskripsi Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${incomeList.map((t, idx) => {
+              const categoryName = getCategoryById(t.categoryId)?.name || 'Umum';
+              const formattedTxDate = new Date(t.date).toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+
+              return `
+                <tr>
+                  <td class="data-cell text-center">${idx + 1}</td>
+                  <td class="data-cell" style="color: #15803d; font-weight: bold;">PEMASUKAN</td>
+                  <td class="amount-cell">+ ${formatRupiah(t.amount)}</td>
+                  <td class="data-cell">${formattedTxDate}</td>
+                  <td class="data-cell" style="font-weight: bold;">${categoryName}</td>
+                  <td class="data-cell">${t.description}</td>
+                </tr>
+              `;
+            }).join('')}
+            ${incomeList.length === 0 ? `
+              <tr>
+                <td colspan="6" class="data-cell text-center" style="color: #94a3b8; padding: 20px;">Tidak ada data pemasukan pada periode ini.</td>
+              </tr>
+            ` : ''}
+          </tbody>
+        </table>
+        <br/>
+        <table>
+          <tr>
+            <td colspan="6" class="footer-cell">Laporan digital otomatis via FinTrack. Dibuat oleh ARNOF DWI FERDIZA. Semua Hak Cipta Dilindungi.</td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\\ufeff' + htmlContent], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Laporan_Pemasukan_${selectedMonth || 'Semua'}_${selectedYear}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Reset filters
   const resetFilters = () => {
     setFilters({
@@ -229,7 +344,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     filters.maxAmount !== '';
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-md border border-slate-100 dark:border-slate-800">
+    <>
+      <div className="no-print bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-md border border-slate-100 dark:border-slate-800">
       {/* Header and Search bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -336,6 +452,19 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                     <div>
                       <p className="font-bold text-slate-800 dark:text-slate-200 font-sans">Unduh Berkas Word</p>
                       <p className="text-[9px] text-slate-400 font-normal">Kompatibel MS Word & WPS</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPrintOptions(false);
+                      handleExportSpreadsheet();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-1"
+                  >
+                    <span className="text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">XLS</span>
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200 font-sans">Unduh Excel / Sheet</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Data Rekap Pemasukan</p>
                     </div>
                   </button>
                 </div>
@@ -517,9 +646,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </AnimatePresence>
         </div>
       )}
+    </div>
 
-      {/* PRINT-ONLY REPORT ELEMENT */}
-      <div className="print-only print-content">
+    {/* PRINT-ONLY REPORT ELEMENT */}
+    <div className="print-only print-content">
         <div className="print-header">
           <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
             <div>
@@ -608,7 +738,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       </div>
 
-    </div>
+    </>
   );
 };
 
