@@ -45,11 +45,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
   const [sortOption, setSortOption] = useState<'DATE_DESC' | 'DATE_ASC' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('DATE_DESC');
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [printScope, setPrintScope] = useState<'MONTH' | 'ALL'>('MONTH');
 
-  const handleExportWord = () => {
+  const handleExportWord = (scope: 'MONTH' | 'ALL' = 'MONTH') => {
+    const listToExport = scope === 'MONTH' ? filteredList : allTimeFilteredList;
     const username = localStorage.getItem('rekap_keuangan_username') || 'Pengguna';
     const userEmail = localStorage.getItem('rekap_keuangan_user_email') || 'user@example.com';
-    const title = `Laporan Keuangan - ${selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}`;
+    const title = `Laporan Keuangan - ${scope === 'MONTH' && selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}`;
     
     let htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -80,11 +82,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         
         <div class="summary-box">
           <p><strong>Nama Pemilik Kas:</strong> ${username} (${userEmail})</p>
-          <p><strong>Periode Laporan:</strong> ${selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}</p>
+          <p><strong>Periode Laporan:</strong> ${scope === 'MONTH' && selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}</p>
           <p><strong>Tanggal Unduh:</strong> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          <p><strong>Total Pemasukan:</strong> <span class="amount-income">${formatRupiah(filteredList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0))}</span></p>
-          <p><strong>Total Pengeluaran:</strong> <span class="amount-expense">${formatRupiah(filteredList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
-          <p><strong>Sisa Saldo Kas:</strong> <strong>${formatRupiah(filteredList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0) - filteredList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</strong></p>
+          <p><strong>Total Pemasukan:</strong> <span class="amount-income">${formatRupiah(listToExport.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+          <p><strong>Total Pengeluaran:</strong> <span class="amount-expense">${formatRupiah(listToExport.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+          <p><strong>Sisa Saldo Kas:</strong> <strong>${formatRupiah(listToExport.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0) - listToExport.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</strong></p>
         </div>
 
         <table>
@@ -99,7 +101,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </tr>
           </thead>
           <tbody>
-            ${filteredList.map((t, idx) => {
+            ${listToExport.map((t, idx) => {
               const categoryName = getCategoryById(t.categoryId)?.name || 'Umum';
               const isIncome = t.type === 'INCOME';
               const formattedTxDate = new Date(t.date).toLocaleDateString('id-ID', {
@@ -121,7 +123,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 </tr>
               `;
             }).join('')}
-            ${filteredList.length === 0 ? `
+            ${listToExport.length === 0 ? `
               <tr>
                 <td colspan="6" class="text-center" style="color: #94a3b8; padding: 20px;">Tidak ada transaksi pada periode ini.</td>
               </tr>
@@ -140,20 +142,22 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Laporan_Keuangan_${selectedMonth || 'Semua'}_${selectedYear}.doc`;
+    a.download = `Laporan_Keuangan_${scope === 'MONTH' ? (selectedMonth || 'Semua') : 'Semua_Periode'}_${selectedYear}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  const handleExportSpreadsheet = () => {
+  const handleExportSpreadsheet = (scope: 'MONTH' | 'ALL' = 'MONTH') => {
+    const listToExport = scope === 'MONTH' ? filteredList : allTimeFilteredList;
     const username = localStorage.getItem('rekap_keuangan_username') || 'Pengguna';
     const userEmail = localStorage.getItem('rekap_keuangan_user_email') || 'user@example.com';
-    const title = `Laporan Rekapitulasi Pemasukan - ${selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}`;
+    const title = `Laporan Rekapitulasi Kas - ${scope === 'MONTH' && selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}`;
     
-    // Filter only INCOME transactions
-    const incomeList = filteredList.filter(t => t.type === 'INCOME');
+    const totalIncome = listToExport.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = listToExport.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
+    const netBalance = totalIncome - totalExpense;
 
     let htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -164,7 +168,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <x:ExcelWorkbook>
             <x:ExcelWorksheets>
               <x:ExcelWorksheet>
-                <x:Name>Pemasukan</x:Name>
+                <x:Name>Rekap Jurnal Kas</x:Name>
                 <x:WorksheetOptions>
                   <x:DisplayGridlines/>
                 </x:WorksheetOptions>
@@ -179,7 +183,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           .subtitle { font-size: 10pt; color: #64748b; font-weight: bold; }
           .header-cell { background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 10pt; border: 1px solid #cbd5e1; padding: 6px; }
           .data-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; padding: 5px; }
-          .amount-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; color: #15803d; font-weight: bold; text-align: right; padding: 5px; }
+          .amount-income-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; color: #15803d; font-weight: bold; text-align: right; padding: 5px; }
+          .amount-expense-cell { border: 1px solid #cbd5e1; font-size: 9.5pt; color: #b91c1c; font-weight: bold; text-align: right; padding: 5px; }
           .footer-cell { font-size: 8pt; color: #94a3b8; font-style: italic; }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
@@ -201,7 +206,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <td colspan="6"><strong>Tanggal Unduh:</strong> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
           </tr>
           <tr>
-            <td colspan="6"><strong>Total Akumulasi Pemasukan:</strong> ${formatRupiah(incomeList.reduce((sum, t) => sum + t.amount, 0))}</td>
+            <td colspan="6"><strong>Total Akumulasi Pemasukan:</strong> <span style="color: #15803d; font-weight: bold;">${formatRupiah(totalIncome)}</span></td>
+          </tr>
+          <tr>
+            <td colspan="6"><strong>Total Akumulasi Pengeluaran:</strong> <span style="color: #b91c1c; font-weight: bold;">${formatRupiah(totalExpense)}</span></td>
+          </tr>
+          <tr>
+            <td colspan="6"><strong>Sisa Saldo Kas Akhir:</strong> <strong style="font-weight: bold;">${formatRupiah(netBalance)}</strong></td>
           </tr>
           <tr><td colspan="6"></td></tr>
           <thead>
@@ -215,8 +226,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </tr>
           </thead>
           <tbody>
-            ${incomeList.map((t, idx) => {
+            ${listToExport.map((t, idx) => {
               const categoryName = getCategoryById(t.categoryId)?.name || 'Umum';
+              const isIncome = t.type === 'INCOME';
               const formattedTxDate = new Date(t.date).toLocaleDateString('id-ID', {
                 year: 'numeric',
                 month: 'long',
@@ -226,17 +238,21 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               return `
                 <tr>
                   <td class="data-cell text-center">${idx + 1}</td>
-                  <td class="data-cell" style="color: #15803d; font-weight: bold;">PEMASUKAN</td>
-                  <td class="amount-cell">+ ${formatRupiah(t.amount)}</td>
+                  <td class="data-cell" style="color: ${isIncome ? '#15803d' : '#b91c1c'}; font-weight: bold;">
+                    ${isIncome ? 'PEMASUKAN' : 'PENGELUARAN'}
+                  </td>
+                  <td class="${isIncome ? 'amount-income-cell' : 'amount-expense-cell'}">
+                    ${isIncome ? '+' : '-'} ${formatRupiah(t.amount)}
+                  </td>
                   <td class="data-cell">${formattedTxDate}</td>
                   <td class="data-cell" style="font-weight: bold;">${categoryName}</td>
                   <td class="data-cell">${t.description}</td>
                 </tr>
               `;
             }).join('')}
-            ${incomeList.length === 0 ? `
+            ${listToExport.length === 0 ? `
               <tr>
-                <td colspan="6" class="data-cell text-center" style="color: #94a3b8; padding: 20px;">Tidak ada data pemasukan pada periode ini.</td>
+                <td colspan="6" class="data-cell text-center" style="color: #94a3b8; padding: 20px;">Tidak ada data transaksi pada periode ini.</td>
               </tr>
             ` : ''}
           </tbody>
@@ -255,7 +271,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Laporan_Pemasukan_${selectedMonth || 'Semua'}_${selectedYear}.xls`;
+    a.download = `Laporan_Kas_${scope === 'MONTH' ? (selectedMonth || 'Semua') : 'Semua_Periode'}_${selectedYear}.xls`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -333,6 +349,53 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     }
     return 0;
   });
+
+  // 4. Construct all-time filtered list (without month/year filter)
+  let allTimeFilteredList = transactions.filter(t => {
+    const categoryName = getCategoryById(t.categoryId)?.name.toLowerCase() || '';
+    const matchSearch =
+      t.description.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+      categoryName.includes(filters.searchQuery.toLowerCase());
+
+    const matchType = filters.type === 'ALL' || t.type === filters.type;
+    const matchCategory = filters.categoryId === 'ALL' || t.categoryId === filters.categoryId;
+
+    let matchDate = true;
+    if (filters.startDate) {
+      matchDate = matchDate && t.date >= filters.startDate;
+    }
+    if (filters.endDate) {
+      matchDate = matchDate && t.date <= filters.endDate;
+    }
+
+    let matchAmount = true;
+    if (filters.minAmount !== '') {
+      matchAmount = matchAmount && t.amount >= Number(filters.minAmount);
+    }
+    if (filters.maxAmount !== '') {
+      matchAmount = matchAmount && t.amount <= Number(filters.maxAmount);
+    }
+
+    return matchSearch && matchType && matchCategory && matchDate && matchAmount;
+  });
+
+  allTimeFilteredList.sort((a, b) => {
+    if (sortOption === 'DATE_DESC') {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+    if (sortOption === 'DATE_ASC') {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    }
+    if (sortOption === 'AMOUNT_DESC') {
+      return b.amount - a.amount;
+    }
+    if (sortOption === 'AMOUNT_ASC') {
+      return a.amount - b.amount;
+    }
+    return 0;
+  });
+
+  const printList = printScope === 'MONTH' ? filteredList : allTimeFilteredList;
 
   const hasActiveFilters =
     filters.searchQuery !== '' ||
@@ -422,13 +485,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   className="fixed inset-0 z-30" 
                   onClick={() => setShowPrintOptions(false)} 
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-40 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-1">
-                    Format Dokumen
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-40 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
+                  {/* SECTION 1: MONTHLY REPORT */}
+                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-1 flex justify-between">
+                    <span>Laporan Bulan Ini</span>
+                    <span className="text-indigo-500 normal-case font-bold">{MONTHS_ID[selectedMonth - 1]}</span>
                   </p>
+                  
                   <button
                     onClick={() => {
                       setShowPrintOptions(false);
+                      setPrintScope('MONTH');
                       setTimeout(() => {
                         window.print();
                       }, 150);
@@ -437,34 +504,86 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   >
                     <span className="text-rose-500 font-bold text-xs bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">PDF</span>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Cetak / Simpan PDF</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Sistem Printer & Browser</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Cetak PDF (Bulan Ini)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Format cetak halaman bulan ini</p>
                     </div>
                   </button>
+
                   <button
                     onClick={() => {
                       setShowPrintOptions(false);
-                      handleExportWord();
+                      handleExportWord('MONTH');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-1"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
                   >
                     <span className="text-blue-500 font-bold text-xs bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">DOC</span>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200 font-sans">Unduh Berkas Word</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Kompatibel MS Word & WPS</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Berkas Word (Bulan Ini)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Unduh format MS Word (.doc)</p>
                     </div>
                   </button>
+
                   <button
                     onClick={() => {
                       setShowPrintOptions(false);
-                      handleExportSpreadsheet();
+                      handleExportSpreadsheet('MONTH');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-1"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
                   >
                     <span className="text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">XLS</span>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200 font-sans">Unduh Excel / Sheet</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Data Rekap Pemasukan</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Excel / Sheet (Bulan Ini)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Rekap kas masuk & keluar</p>
+                    </div>
+                  </button>
+
+                  {/* SECTION 2: ALL TIME REPORT */}
+                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-y border-slate-100 dark:border-slate-800/80 my-1.5">
+                    Laporan Semua Periode (Semua Bulan)
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setShowPrintOptions(false);
+                      setPrintScope('ALL');
+                      setTimeout(() => {
+                        window.print();
+                      }, 150);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer"
+                  >
+                    <span className="text-rose-500 font-bold text-xs bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">PDF</span>
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Cetak PDF (Semua Bulan)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Seluruh data kas (In & Out)</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowPrintOptions(false);
+                      handleExportWord('ALL');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
+                  >
+                    <span className="text-blue-500 font-bold text-xs bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">DOC</span>
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Berkas Word (Semua Bulan)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Unduh seluruh kas format Word</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowPrintOptions(false);
+                      handleExportSpreadsheet('ALL');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
+                  >
+                    <span className="text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">XLS</span>
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Excel / Sheet (Semua Bulan)</p>
+                      <p className="text-[9px] text-slate-400 font-normal">Rekap seluruh data keuangan (.xls)</p>
                     </div>
                   </button>
                 </div>
@@ -647,33 +766,32 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       )}
     </div>
-
     {/* PRINT-ONLY REPORT ELEMENT */}
     <div className="print-only print-content">
         <div className="print-header">
-          <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b-2 border-slate-800 pb-4 mb-4">
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">LAPORAN REKAPITULASI KEUANGAN</h1>
               <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-1">Sistem Buku Jurnal Kas FinTrack • by ARNOF DWI FERDIZA</p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <span className="inline-block px-3 py-1 bg-slate-900 text-white rounded font-bold text-[10px] tracking-wider uppercase">
                 LAPORAN RESMI
               </span>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-6 text-xs text-slate-700 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-xs text-slate-700 mb-6">
             <div className="space-y-1">
               <p><strong>Nama Pemilik Kas:</strong> {localStorage.getItem('rekap_keuangan_username') || 'Pengguna'}</p>
-              <p><strong>Periode Laporan:</strong> {selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}</p>
+              <p><strong>Periode Laporan:</strong> {printScope === 'MONTH' && selectedMonth ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}</p>
               <p><strong>Tanggal Cetak:</strong> {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
-            <div className="text-right space-y-1">
-              <p><strong>Total Pemasukan:</strong> <span className="text-emerald-700 font-bold">{formatRupiah(filteredList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0))}</span></p>
-              <p><strong>Total Pengeluaran:</strong> <span className="text-rose-700 font-bold">{formatRupiah(filteredList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+            <div className="text-left sm:text-right space-y-1">
+              <p><strong>Total Pemasukan:</strong> <span className="text-emerald-700 font-bold">{formatRupiah(printList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+              <p><strong>Total Pengeluaran:</strong> <span className="text-rose-700 font-bold">{formatRupiah(printList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
               <div className="pt-1 border-t border-slate-200 mt-1">
-                <p><strong>Sisa Saldo Kas:</strong> <span className="text-slate-900 font-black">{formatRupiah(filteredList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0) - filteredList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+                <p><strong>Sisa Saldo Kas:</strong> <span className="text-slate-900 font-black">{formatRupiah(printList.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0) - printList.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
               </div>
             </div>
           </div>
@@ -692,7 +810,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               </tr>
             </thead>
             <tbody>
-              {filteredList.map((item, idx) => {
+              {printList.map((item, idx) => {
                 const category = getCategoryById(item.categoryId);
                 const isIncome = item.type === 'INCOME';
                 const formattedTxDate = new Date(item.date).toLocaleDateString('id-ID', {
@@ -703,8 +821,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                 return (
                   <tr key={item.id} className="border-b border-slate-300 last:border-b-0 hover:bg-slate-50">
-                    <td className="p-2.5 text-center text-slate-500 font-mono border-r border-slate-300">{idx + 1}</td>
-                    <td className="p-2.5 border-r border-slate-300">
+                    <td data-label="No" className="p-2.5 text-center text-slate-500 font-mono border-r border-slate-300">{idx + 1}</td>
+                    <td data-label="Jenis" className="p-2.5 border-r border-slate-300">
                       <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold ${
                         isIncome 
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
@@ -713,16 +831,16 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         {isIncome ? 'PEMASUKAN' : 'PENGELUARAN'}
                       </span>
                     </td>
-                    <td className={`p-2.5 text-right font-bold font-mono border-r border-slate-300 ${isIncome ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    <td data-label="Jumlah Uang" className={`p-2.5 text-right font-bold font-mono border-r border-slate-300 ${isIncome ? 'text-emerald-700' : 'text-rose-700'}`}>
                       {isIncome ? '+' : '-'} {formatRupiah(item.amount)}
                     </td>
-                    <td className="p-2.5 border-r border-slate-300 font-medium text-slate-800">{formattedTxDate}</td>
-                    <td className="p-2.5 border-r border-slate-300 font-semibold text-slate-800">{category?.name || 'Umum'}</td>
-                    <td className="p-2.5 text-slate-600">{item.description}</td>
+                    <td data-label="Tanggal" className="p-2.5 border-r border-slate-300 font-medium text-slate-800">{formattedTxDate}</td>
+                    <td data-label="Kategori" className="p-2.5 border-r border-slate-300 font-semibold text-slate-800">{category?.name || 'Umum'}</td>
+                    <td data-label="Keterangan" className="p-2.5 text-slate-600">{item.description}</td>
                   </tr>
                 );
               })}
-              {filteredList.length === 0 && (
+              {printList.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-6 text-center text-slate-400 font-medium">
                     Tidak ada transaksi pada periode laporan ini.
