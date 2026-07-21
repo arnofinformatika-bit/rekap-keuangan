@@ -11,7 +11,10 @@ import {
   Info,
   Calendar,
   DollarSign,
-  Printer
+  Printer,
+  Database,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Transaction, FilterOptions, Category } from '../types';
 import { CATEGORIES, formatRupiah, getCategoryById, MONTHS_ID } from '../utils/helpers';
@@ -46,6 +49,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   const [sortOption, setSortOption] = useState<'DATE_DESC' | 'DATE_ASC' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('DATE_DESC');
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [printScope, setPrintScope] = useState<'MONTH' | 'ALL'>('MONTH');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewScope, setPreviewScope] = useState<'MONTH' | 'ALL'>('MONTH');
 
   const handleExportWord = (scope: 'MONTH' | 'ALL' = 'MONTH') => {
     const listToExport = scope === 'MONTH' ? filteredList : allTimeFilteredList;
@@ -130,6 +135,14 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             ` : ''}
           </tbody>
         </table>
+
+        <div style="margin-top: 50px; margin-bottom: 30px; float: right; width: 250px; text-align: center; font-family: Arial, sans-serif;">
+          <p style="margin: 0; font-size: 10pt; color: #475569;">Jakarta, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p style="margin: 5px 0 60px 0; font-size: 10pt; font-weight: bold; color: #1e293b;">Pemilik Kas,</p>
+          <p style="margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; color: #0f172a;">${username}</p>
+          <p style="margin: 2px 0 0 0; font-size: 8.5pt; color: #64748b;">Sistem Kas FinTrack</p>
+        </div>
+        <div style="clear: both;"></div>
 
         <div class="footer">
           Laporan digital otomatis via FinTrack. Dibuat oleh ARNOF DWI FERDIZA. Semua Hak Cipta Dilindungi.
@@ -485,105 +498,44 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   className="fixed inset-0 z-30" 
                   onClick={() => setShowPrintOptions(false)} 
                 />
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-40 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
-                  {/* SECTION 1: MONTHLY REPORT */}
-                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-1 flex justify-between">
-                    <span>Laporan Bulan Ini</span>
-                    <span className="text-indigo-500 normal-case font-bold">{MONTHS_ID[selectedMonth - 1]}</span>
+                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2.5 z-40 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <p className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-1.5">
+                    Pilih Cakupan Laporan
                   </p>
                   
                   <button
                     onClick={() => {
-                      setShowPrintOptions(false);
+                      setPreviewScope('MONTH');
                       setPrintScope('MONTH');
-                      setTimeout(() => {
-                        window.print();
-                      }, 150);
+                      setIsPreviewOpen(true);
+                      setShowPrintOptions(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-left transition-colors cursor-pointer"
                   >
-                    <span className="text-rose-500 font-bold text-xs bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">PDF</span>
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg text-indigo-500 flex-shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Cetak PDF (Bulan Ini)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Format cetak halaman bulan ini</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Laporan Bulan Ini</p>
+                      <p className="text-[10px] text-slate-400 font-normal">Periode: {MONTHS_ID[selectedMonth - 1]} {selectedYear}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => {
-                      setShowPrintOptions(false);
-                      handleExportWord('MONTH');
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
-                  >
-                    <span className="text-blue-500 font-bold text-xs bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">DOC</span>
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Berkas Word (Bulan Ini)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Unduh format MS Word (.doc)</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowPrintOptions(false);
-                      handleExportSpreadsheet('MONTH');
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
-                  >
-                    <span className="text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">XLS</span>
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Excel / Sheet (Bulan Ini)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Rekap kas masuk & keluar</p>
-                    </div>
-                  </button>
-
-                  {/* SECTION 2: ALL TIME REPORT */}
-                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 px-3 py-1.5 border-y border-slate-100 dark:border-slate-800/80 my-1.5">
-                    Laporan Semua Periode (Semua Bulan)
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      setShowPrintOptions(false);
+                      setPreviewScope('ALL');
                       setPrintScope('ALL');
-                      setTimeout(() => {
-                        window.print();
-                      }, 150);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer"
-                  >
-                    <span className="text-rose-500 font-bold text-xs bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">PDF</span>
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Cetak PDF (Semua Bulan)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Seluruh data kas (In & Out)</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
+                      setIsPreviewOpen(true);
                       setShowPrintOptions(false);
-                      handleExportWord('ALL');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-left transition-colors cursor-pointer mt-1"
                   >
-                    <span className="text-blue-500 font-bold text-xs bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">DOC</span>
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Berkas Word (Semua Bulan)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Unduh seluruh kas format Word</p>
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg text-indigo-500 flex-shrink-0">
+                      <Database className="w-4 h-4" />
                     </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowPrintOptions(false);
-                      handleExportSpreadsheet('ALL');
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-left transition-colors cursor-pointer mt-0.5"
-                  >
-                    <span className="text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">XLS</span>
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">Excel / Sheet (Semua Bulan)</p>
-                      <p className="text-[9px] text-slate-400 font-normal">Rekap seluruh data keuangan (.xls)</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">Laporan Semua Periode</p>
+                      <p className="text-[10px] text-slate-400 font-normal">Seluruh data kas (In & Out)</p>
                     </div>
                   </button>
                 </div>
@@ -766,6 +718,249 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       )}
     </div>
+
+    {/* DOCUMENT PREVIEW MODAL */}
+    <AnimatePresence>
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto no-print">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPreviewOpen(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          />
+
+          {/* Modal Content Wrapper */}
+          <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 md:p-10">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              className="relative bg-slate-50 dark:bg-slate-950 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Printer className="w-5 h-5 text-indigo-500" />
+                    Pratinjau Dokumen Laporan Resmi
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Lihat format resmi dokumen laporan sebelum dicetak atau diekspor ke format berkas
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Toolbar / Action Controls */}
+              <div className="p-4 bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+                {/* Scope Selector Tab */}
+                <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl w-full md:w-auto border border-slate-200/40 dark:border-slate-800/60">
+                  <button
+                    onClick={() => {
+                      setPreviewScope('MONTH');
+                      setPrintScope('MONTH');
+                    }}
+                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      previewScope === 'MONTH'
+                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    Bulan Ini ({MONTHS_ID[selectedMonth - 1]})
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPreviewScope('ALL');
+                      setPrintScope('ALL');
+                    }}
+                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      previewScope === 'ALL'
+                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    Semua Periode
+                  </button>
+                </div>
+
+                {/* Export Options Row */}
+                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      setPrintScope(previewScope);
+                      setTimeout(() => {
+                        window.print();
+                      }, 100);
+                    }}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Cetak / Simpan PDF
+                  </button>
+
+                  <button
+                    onClick={() => handleExportWord(previewScope)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Ekspor Word (.doc)
+                  </button>
+
+                  <button
+                    onClick={() => handleExportSpreadsheet(previewScope)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Ekspor Excel (.xls)
+                  </button>
+                </div>
+              </div>
+
+              {/* Virtual A4 Paper Area */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-100 dark:bg-slate-950/40">
+                {/* The virtual paper */}
+                <div className="bg-white text-slate-900 p-6 sm:p-10 w-full max-w-[800px] shadow-lg rounded-sm border border-slate-200 relative flex flex-col justify-between font-sans min-h-[1050px] aspect-[1/1.414]">
+                  
+                  {/* Watermark / Background Accent */}
+                  <div className="absolute inset-0 pointer-events-none border-[12px] border-slate-50/20 rounded-sm m-4" />
+
+                  <div>
+                    {/* Document Header */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b-2 border-slate-800 pb-5 mb-6">
+                      <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                          LAPORAN REKAPITULASI KEUANGAN
+                        </h1>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-1.5">
+                          Sistem Buku Jurnal Kas FinTrack • by ARNOF DWI FERDIZA
+                        </p>
+                      </div>
+                      <div className="text-left sm:text-right flex-shrink-0">
+                        <span className="inline-block px-3 py-1 bg-slate-900 text-white rounded font-extrabold text-[9px] tracking-wider uppercase">
+                          LAPORAN RESMI
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Metadata info */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-xs text-slate-700 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <div className="space-y-1.5">
+                        <p><strong>Nama Pemilik Kas:</strong> {localStorage.getItem('rekap_keuangan_username') || 'Pengguna'}</p>
+                        <p><strong>Periode Laporan:</strong> {previewScope === 'MONTH' ? `${MONTHS_ID[selectedMonth - 1]} ${selectedYear}` : 'Semua Periode'}</p>
+                        <p><strong>Tanggal Unduh:</strong> {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      </div>
+                      <div className="text-left sm:text-right space-y-1.5">
+                        <p><strong>Total Pemasukan:</strong> <span className="text-emerald-700 font-extrabold">{formatRupiah((previewScope === 'MONTH' ? filteredList : allTimeFilteredList).filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+                        <p><strong>Total Pengeluaran:</strong> <span className="text-rose-700 font-extrabold">{formatRupiah((previewScope === 'MONTH' ? filteredList : allTimeFilteredList).filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+                        <div className="pt-1.5 border-t border-slate-200 mt-1.5">
+                          <p><strong>Sisa Saldo Kas:</strong> <span className="text-slate-900 font-black text-sm">{formatRupiah((previewScope === 'MONTH' ? filteredList : allTimeFilteredList).filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0) - (previewScope === 'MONTH' ? filteredList : allTimeFilteredList).filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0))}</span></p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transactions Table */}
+                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs mb-8">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-900 text-white border-b border-slate-850">
+                            <th className="p-2.5 font-bold text-center w-10">No</th>
+                            <th className="p-2.5 font-bold w-28">Jenis</th>
+                            <th className="p-2.5 font-bold text-right w-36">Jumlah Uang</th>
+                            <th className="p-2.5 font-bold w-32">Tanggal</th>
+                            <th className="p-2.5 font-bold w-28">Kategori</th>
+                            <th className="p-2.5 font-bold">Keterangan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(previewScope === 'MONTH' ? filteredList : allTimeFilteredList).map((item, idx) => {
+                            const category = getCategoryById(item.categoryId);
+                            const isIncome = item.type === 'INCOME';
+                            const formattedTxDate = new Date(item.date).toLocaleDateString('id-ID', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            });
+
+                            return (
+                              <tr key={item.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50">
+                                <td className="p-2.5 text-center text-slate-400 font-mono border-r border-slate-100">{idx + 1}</td>
+                                <td className="p-2.5 border-r border-slate-100">
+                                  <span className={`inline-block px-2 py-0.5 rounded text-[8px] font-black ${
+                                    isIncome 
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                      : 'bg-rose-50 text-rose-700 border border-rose-100'
+                                  }`}>
+                                    {isIncome ? 'PEMASUKAN' : 'PENGELUARAN'}
+                                  </span>
+                                </td>
+                                <td className={`p-2.5 text-right font-bold font-mono border-r border-slate-100 ${isIncome ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                  {isIncome ? '+' : '-'} {formatRupiah(item.amount)}
+                                </td>
+                                <td className="p-2.5 border-r border-slate-100 text-slate-700 font-medium">{formattedTxDate}</td>
+                                <td className="p-2.5 border-r border-slate-100 text-slate-800 font-bold">{category?.name || 'Umum'}</td>
+                                <td className="p-2.5 text-slate-600 font-normal truncate max-w-[150px]">{item.description}</td>
+                              </tr>
+                            );
+                          })}
+                          {(previewScope === 'MONTH' ? filteredList : allTimeFilteredList).length === 0 && (
+                            <tr>
+                              <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
+                                Tidak ada transaksi pada periode laporan ini.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Signature Block & Stamp Placeholder */}
+                  <div className="mt-8 pt-4 flex justify-between items-end border-t border-slate-100">
+                    <div className="text-[10px] text-slate-400 max-w-[300px] leading-relaxed">
+                      <span className="font-extrabold uppercase text-[8px] text-slate-500 block mb-1">Catatan Dokumen</span>
+                      Dokumen laporan ini sah diakui oleh pemilik kas bersangkutan dan diproduksi secara elektronik dengan integritas data penuh.
+                    </div>
+                    <div className="text-right text-xs pr-4">
+                      <p className="text-slate-500 mb-14 text-[10px]">
+                        Jakarta, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                      <p className="font-extrabold text-slate-950 uppercase border-b border-slate-400 pb-1 inline-block">
+                        {localStorage.getItem('rekap_keuangan_username') || 'Pengguna'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-bold mt-0.5">Pemilik Kas FinTrack</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3.5">
+                <span className="text-xs text-slate-400 self-center hidden sm:inline mr-auto">
+                  Jumlah baris transaksi: <strong>{(previewScope === 'MONTH' ? filteredList : allTimeFilteredList).length}</strong> baris
+                </span>
+                <button
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="px-5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Kembali
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+
     {/* PRINT-ONLY REPORT ELEMENT */}
     <div className="print-only print-content">
         <div className="print-header">
